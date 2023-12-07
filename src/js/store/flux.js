@@ -1,42 +1,109 @@
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+			contacts: []
+			//Your data structures, A.K.A Entities
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
+			addContact: newContact => {
+				const tempStore = getStore();
+				console.log(newContact);
+				fetch("https://assets.breatheco.de/apis/fake/contact", {
+					method: "POST",
+					body: JSON.stringify(newContact),
+					headers: {
+						"Content-Type": "application/json"
+					}
+				})
+					.then(function(response) {
+						if (!response.ok) {
+							throw Error(response.statusText);
+						}
+						// Read the response as json.
+						return response.json();
+					})
+					.then(function(responseAsJson) {
+						fetch("https://assets.breatheco.de/apis/fake/contact/agenda/camilla_w")
+							.then(function(response) {
+								if (!response.ok) {
+									throw Error(response.statusText);
+								}
+								// Read the response as json.
+								return response.json();
+							})
+							.then(function(responseAsJson) {
+								// Do stuff with the JSON
+								setStore({ contacts: responseAsJson });
+							})
+							.catch(function(error) {
+								console.log("Looks like there was a problem: \n", error);
+							});
+					})
+					.catch(function(error) {
+						console.log("Looks like there was a problem: \n", error);
+					});
 			},
-			loadSomeData: () => {
-				/**
-					fetch().then().then(data => setStore({ "foo": data.bar }))
-				*/
+			// .then(() => getActions().initialData())
+
+			// .catch(function(error) {
+			// 	console.log("Looks like there was a problem: \n", error);
+			// });
+
+			// delete function
+			deleteContact: id => {
+				fetch(`https://assets.breatheco.de/apis/fake/contact/${id}`, { method: "DELETE" })
+					.then(response => response.json())
+					.then(response => {
+						fetch("https://assets.breatheco.de/apis/fake/contact/agenda/camilla_w")
+							.then(function(response) {
+								if (!response.ok) {
+									throw Error(response.statusText);
+								}
+								// Read the response as json.
+								return response.json();
+							})
+							.then(function(responseAsJson) {
+								// Do stuff with the JSON
+								setStore({ contacts: responseAsJson });
+							})
+							.catch(function(error) {
+								console.log("Looks like there was a problem: \n", error);
+							});
+					});
 			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
+			editContact: (editedContact, id) => {
+				console.log(editedContact);
+				fetch(`https://assets.breatheco.de/apis/fake/contact/${id}`, {
+					method: "PUT",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify(editedContact)
+				})
+					.then(() => getActions().initialData())
+					// getActions gives you access to line 7, with a dot you get to access initialData
+					.catch(function(error) {
+						console.log("Looks like there was a problem: \n", error);
+					});
+			},
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
-				});
+			initialData: () => {
+				fetch("https://assets.breatheco.de/apis/fake/contact/agenda/camilla_w")
+					.then(function(response) {
+						if (!response.ok) {
+							throw Error(response.statusText);
+						}
+						// Read the response as json.
+						return response.json();
+					})
+					.then(function(responseAsJson) {
+						// Do stuff with the JSON
 
-				//reset the global store
-				setStore({ demo: demo });
+						setStore({ contacts: responseAsJson });
+					})
+					.catch(function(error) {
+						console.log("Looks like there was a problem: \n", error);
+					});
 			}
 		}
 	};
